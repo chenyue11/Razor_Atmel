@@ -91,7 +91,8 @@ void UserApp1Initialize(void)
   /* If good initialization, set state to Idle */
   if( 1 )
   {
-    UserApp1_StateMachine = UserApp1SM_Idle;
+    //UserApp1_StateMachine = UserApp1SM_Idle;
+    UserApp1_StateMachine =BCD_code_display;
   }
   else
   {
@@ -131,7 +132,78 @@ void UserApp1RunActiveState(void)
 /**********************************************************************************************************************
 State Machine Function Definitions
 **********************************************************************************************************************/
+// 
+void BCD_code_display(void)
+{
+  static u16 u16_counter = 0;
+  static u8 a_u8_binary[8]= 0;
+  u8 u8_temp_counter;
+  u16 u16_counter1 = 0;
+  u16 u16_counter2 = 0;
+  if(G_u32SystemTime1ms%1000==0)
+  {
+    u16_counter++;
+    if(u16_counter==99)
+      u16_counter=0;
+  }
+  u16_counter1=u16_counter%10;
+  for(u8_temp_counter = 7;u8_temp_counter>=4&&u8_temp_counter <=7;u8_temp_counter--)
+  {
+    a_u8_binary[u8_temp_counter]=u16_counter1%2;
+            u16_counter1=u16_counter1/2;
+  }
+  u16_counter2=u16_counter/10;
+  for(u8_temp_counter = 3;u8_temp_counter>=0&&u8_temp_counter <=3;u8_temp_counter--)
+  {
+    a_u8_binary[u8_temp_counter]=u16_counter2%2;
+            u16_counter2=u16_counter2/2;
+  }
+  for(u8_temp_counter = 0;u8_temp_counter <=7;u8_temp_counter++)
+  {
+    if(a_u8_binary[u8_temp_counter]==1)
+      LedOn(u8_temp_counter);
+  else
+      LedOff(u8_temp_counter);
+  }
+}
+/*void double_led(void)
+{
+  u8 u8_counter=0;
+  if(G_u32SystemTime1ms%500==0)
+    for(u8_counter=0;u8_counter<=4;u8_counter++)
+    {
+      LedOn(u8_counter*2);
+    }
+  if(G_u32SystemTime1ms%2000==0)
+    for(u8_counter=0;u8_counter<=4;u8_counter++)
+    {
+      LedOff(u8_counter*2);
+    }
+  if(G_u32SystemTime1ms%10000==0)
+   UserApp1_StateMachine = all_led;
+}
 
+
+//all led light.
+void all_led(void)
+{u8 u8_counter=0;
+  if(G_u32SystemTime1ms%1000==0)
+  {
+    for(u8_counter=0;u8_counter<=7;u8_counter++)
+    {
+      LedOn(u8_counter);
+    }
+  }
+  if(G_u32SystemTime1ms%2000==0)
+  {
+    for(u8_counter=0;u8_counter<=7;u8_counter++)
+    {
+      LedOff(u8_counter);
+    }
+  }
+  if(G_u32SystemTime1ms%10000==0)
+   UserApp1_StateMachine = double_led;
+}*/
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Wait for ??? */
 static void UserApp1SM_Idle(void)
@@ -181,8 +253,8 @@ static void UserApp1SM_Idle(void)
 }*/
 
   u8 u8randCounter;
-u32 u32Counter1 = 0;
-u8randCounter=rand()%8;
+  u32 u32Counter1 = 0;
+  u8randCounter=rand()%8;
 switch(u8randCounter)
    {   
       case 0:
@@ -225,7 +297,7 @@ switch(u8randCounter)
              for(u32Counter1=0;u32Counter1<2000*500;u32Counter1++);
            
              LedOff(CYAN);break;
-   }  
+   }   
 }
  /* static u8 u8key=0;
   static u32 u32Counter1 = 0;
