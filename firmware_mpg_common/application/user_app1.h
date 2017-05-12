@@ -47,6 +47,9 @@ void UserApp1RunActiveState(void);
 void all_led(void);
 void double_led(void);
 void BCD_code_display(void);
+void button_pressed(void);
+void passord_button(void);
+static u8 GetButtonValue(void);
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* Private functions                                                                                                  */
 /*--------------------------------------------------------------------------------------------------------------------*/

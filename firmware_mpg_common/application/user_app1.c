@@ -88,11 +88,26 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
+  LedOff(BLUE);
+  LedOff(YELLOW);
+  LedOff(RED);
+  LedOff(PURPLE);
+  LedOff(WHITE);
+  LedOff(ORANGE);
+  LedOff(CYAN);
+  LedOff(GREEN);
+ /* LedOn(BLUE);
+  LedToggle(PURPLE);
+  LedPWM(RED,Led_PWM10);
+  LedBlink(RED, LED_2HZ);*/
+  
   /* If good initialization, set state to Idle */
   if( 1 )
   {
-    //UserApp1_StateMachine = UserApp1SM_Idle;
-    UserApp1_StateMachine =BCD_code_display;
+    UserApp1_StateMachine = UserApp1SM_Idle;
+   // UserApp1_StateMachine =BCD_code_display;
+    //UserApp1_StateMachine =button_pressed;
+   // UserApp1_StateMachine =passord_button;
   }
   else
   {
@@ -122,6 +137,80 @@ void UserApp1RunActiveState(void)
   UserApp1_StateMachine();
 
 } /* end UserApp1RunActiveState */
+/*void passord_button(void)
+{
+  static u8 u8_passord[4]={0,2,3,1};
+  static u8 u8_input_button[4]= 0;
+  static u8 u8_counter_button_press= 0;
+  static BOOL B_Pass_No[3]= FALSE;
+  u8 u8_counter;
+  if(WasButtonPressed(BUTTON0))
+  {
+    u8_input_button[u8_counter_button_press]=0;
+    ButtonAcknowledge(BUTTON0);
+    u8_counter_button_press++;
+  }
+  if(WasButtonPressed(BUTTON1))
+  {
+    u8_input_button[u8_counter_button_press]=1;
+    ButtonAcknowledge(BUTTON1);
+    u8_counter_button_press++;
+  }
+  if(WasButtonPressed(BUTTON2))
+  {
+    u8_input_button[u8_counter_button_press]=2;
+    ButtonAcknowledge(BUTTON2);
+    u8_counter_button_press++;
+  }
+    if(WasButtonPressed(BUTTON3))
+  {
+    u8_input_button[u8_counter_button_press]=3;
+    ButtonAcknowledge(BUTTON3);
+    u8_counter_button_press++;
+  }
+  for(u8_counter=0;u8_counter<4;u8_counter++)
+  {
+    if(u8_input_button[u8_counter]==u8_passord[u8_counter])
+      LedOn(BLUE);
+    else
+      LedOn(RED);
+  }
+  
+    
+}*/
+
+
+/*void button_pressed(void)
+{
+  static bool B_ispressed[3]=FALSE;
+  if(IsButtonPressed(BUTTON0)==TRUE)
+  {
+    if(B_ispressed[0]=FALSE)
+    { 
+      LedOn(RED);
+      B_ispressed[0]=TRUE;
+    }
+    else
+    {
+      LedOff(RED);
+      B_ispressed[0]=FALSE;
+    }
+  }
+  if(WasButtonPressed(BUTTON1)==TRUE)
+  {
+    if(B_ispressed[1]=FALSE)
+    { 
+      LedOn(BLUE);
+      B_ispressed[1]=TRUE;
+    }
+    else
+    {
+      LedOff(BLUE);
+      B_ispressed[1]=FALSE;
+    }
+    ButtonAcknowledge(BUTTON1);
+  }
+}*/
 
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -133,7 +222,7 @@ void UserApp1RunActiveState(void)
 State Machine Function Definitions
 **********************************************************************************************************************/
 // 
-void BCD_code_display(void)
+/*void BCD_code_display(void)
 {
   static u16 u16_counter = 0;
   static u8 a_u8_binary[8]= 0;
@@ -181,11 +270,11 @@ void BCD_code_display(void)
     }
   if(G_u32SystemTime1ms%10000==0)
    UserApp1_StateMachine = all_led;
-}
+}*/
 
 
 //all led light.
-void all_led(void)
+/*void all_led(void)
 {u8 u8_counter=0;
   if(G_u32SystemTime1ms%1000==0)
   {
@@ -206,8 +295,182 @@ void all_led(void)
 }*/
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Wait for ??? */
+static u8 GetButtonValue(void)
+{ 
+  u8 u8Buttonword = 0;
+  if(WasButtonPressed(BUTTON0))
+  {
+    ButtonAcknowledge(BUTTON0);
+    u8Buttonword = 1; 
+  }
+
+  if(WasButtonPressed(BUTTON1))
+  {
+    ButtonAcknowledge(BUTTON1);
+    u8Buttonword = 2; 
+  }
+  
+  if(WasButtonPressed(BUTTON2))
+  {
+    ButtonAcknowledge(BUTTON2);
+    u8Buttonword = 3; 
+  }
+  
+  return u8Buttonword;
+}
+
+
 static void UserApp1SM_Idle(void)
 {
+  static u8 u8RankNumber1 = 0;
+  static u8 u8RankNumber2 = 0; 
+  static u8 au8Password[10];
+  static u8 au8RealPassword[10];
+  static u8 u8TempButtonValue1 = 9;
+  static u8 u8TempButtonValue2 = 9;
+  static u8 u8Index;
+  static bool bCheckFlag = FALSE;
+  static bool bCheckword = TRUE;
+  static bool bInputRealCodeReady = FALSE;
+  static bool bRealCodeComplete = FALSE;
+  static bool blightswitch = FALSE;
+  
+  //prepare to set code
+  if(IsButtonHeld(BUTTON3,2000))
+  {
+    bInputRealCodeReady = TRUE;
+    ButtonAcknowledge(BUTTON3);
+    blightswitch = TRUE;
+    bRealCodeComplete = FALSE;
+    for(u8Index = 0;u8Index<u8RankNumber1;u8Index++)
+    {
+      au8RealPassword[u8Index] = 0;
+    }
+    u8RankNumber1 = 0;
+  }
+  
+  //light switch
+  if(blightswitch)
+  {
+    LedBlink(RED,LED_2HZ);
+    LedBlink(GREEN,LED_2HZ);
+     blightswitch = FALSE;
+  }
+
+  //start set code
+  if(bInputRealCodeReady)
+  { 
+
+    u8TempButtonValue1 = GetButtonValue();
+    if((u8TempButtonValue1 == 1)||(u8TempButtonValue1 == 2)||(u8TempButtonValue1 == 3))
+    {
+      au8RealPassword[u8RankNumber1] = u8TempButtonValue1;
+      u8RankNumber1++;
+    }
+  }
+  
+  //complete set code
+  if(bInputRealCodeReady)
+  {  
+    if(WasButtonPressed(BUTTON3))
+    {
+      ButtonAcknowledge(BUTTON3);
+      LedOff(RED);
+      LedOff(GREEN);
+      bRealCodeComplete = TRUE;
+      bInputRealCodeReady = FALSE;
+      blightswitch = FALSE;
+    } 
+  } 
+  
+  
+  //check code
+  if(bRealCodeComplete)
+  {
+    u8TempButtonValue2 = GetButtonValue();
+    if((u8TempButtonValue2 == 1)||(u8TempButtonValue2 == 2)||(u8TempButtonValue2 == 3))
+    {
+      au8Password[u8RankNumber2] = u8TempButtonValue2;
+      u8RankNumber2++;
+    }
+    if(WasButtonPressed(BUTTON3))  
+    {
+      ButtonAcknowledge(BUTTON3);
+      bCheckFlag = TRUE;
+    }
+    if(bCheckFlag)
+    {
+      for(u8Index = 0;u8Index<u8RankNumber1;u8Index++)
+      {
+        if(au8Password[u8Index]!=au8RealPassword[u8Index])
+        {
+          bCheckword = FALSE;
+          break;
+        }
+      }
+      if(bCheckword)
+      {
+        LedBlink(GREEN,LED_2HZ);
+        LedOff(RED);
+      }
+      else
+      {
+        LedBlink(RED,LED_2HZ);
+        LedOff(GREEN);
+      }
+      
+      bCheckFlag = FALSE;
+      bCheckword=TRUE;
+      for(u8Index = 0;u8Index<u8RankNumber2;u8Index++)
+      {
+        au8Password[u8Index] = 0;
+      }
+      u8RankNumber2 = 0;
+            
+    }
+  }
+    
+}
+
+  /*static bool B_ispressed[3]=FALSE;
+  if(IsButtonPressed(BUTTON0)==TRUE)
+  {
+    if(B_ispressed[0]=FALSE)
+    { 
+      LedOn(RED);
+      B_ispressed[0]=TRUE;
+    }
+    else
+    {
+      LedOff(RED);
+      B_ispressed[0]=FALSE;
+    }
+  }
+  if(WasButtonPressed(BUTTON1)==TRUE)
+  {
+    if(B_ispressed[1]=FALSE)
+    { 
+      LedOn(BLUE);
+      B_ispressed[1]=TRUE;
+    }
+    else
+    {
+      LedOff(BLUE);
+      B_ispressed[1]=FALSE;
+    }
+    ButtonAcknowledge(BUTTON1);
+  }
+}*/
+  /*static u8 u8_pwm_red=0;
+  if(G_u32SystemTime1ms%1000==0)
+  {
+    LedToggle(PURPLE);
+    u8_pwm_red++;
+    if(u8_pwm_red>=20)
+      u8_pwm_red=0;
+    LedPWM(RED,u8_pwm_red);
+  }*/
+
      /* static u8 u8key=0;
   static u32 u32Counter1 = 0;
   static u32 u32Counter2 = 1;
@@ -252,7 +515,7 @@ static void UserApp1SM_Idle(void)
   }
 }*/
 
-  u8 u8randCounter;
+/*  u8 u8randCounter;
   u32 u32Counter1 = 0;
   u8randCounter=rand()%8;
 switch(u8randCounter)
@@ -357,4 +620,4 @@ static void UserApp1SM_FailedInit(void)
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* End of File                                                                                                        */
-/*--------------------------------------------------------------------------------------------------------------------*/
+
