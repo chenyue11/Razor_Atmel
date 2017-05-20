@@ -51,7 +51,8 @@ extern volatile u32 G_u32ApplicationFlags;             /* From main.c */
 
 extern volatile u32 G_u32SystemTime1ms;                /* From board-specific source file */
 extern volatile u32 G_u32SystemTime1s;                 /* From board-specific source file */
-
+extern u8 G_au8DebugScanfBuffer[];                     /* From debug.c */
+extern u8 G_u8DebugScanfCharCount;                     /* From debug.c */
 
 /***********************************************************************************************************************
 Global variable definitions with scope limited to this local application.
@@ -59,8 +60,8 @@ Variable names shall start with "UserApp1_" and be declared as static.
 ***********************************************************************************************************************/
 static fnCode_type UserApp1_StateMachine;            /* The state machine function pointer */
 //static u32 UserApp1_u32Timeout;                      /* Timeout counter used across states */
-
-
+static u8 UserApp_au8MyName[] = "LCD Example";
+static u8 UserApp_CursorPosition;
 /**********************************************************************************************************************
 Function Definitions
 **********************************************************************************************************************/
@@ -88,14 +89,34 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
-  LedOff(BLUE);
+  /*LedOff(BLUE);
   LedOff(YELLOW);
   LedOff(RED);
   LedOff(PURPLE);
   LedOff(WHITE);
   LedOff(ORANGE);
   LedOff(CYAN);
-  LedOff(GREEN);
+  LedOff(GREEN);*/
+  LCDCommand(LCD_HOME_CMD); 
+  LCDMessage(LINE1_START_ADDR, UserApp_au8MyName);
+  LCDMessage(LINE2_START_ADDR, "0");
+  LCDMessage(LINE2_START_ADDR + 6, "1");
+  LCDMessage(LINE2_START_ADDR + 13, "2");
+  LCDMessage(LINE2_END_ADDR, "3");
+  LCDCommand(LCD_HOME_CMD); 
+  UserApp_CursorPosition = LINE1_START_ADDR;
+  /*u8 u8String[] = "A string to print that returns cursor to start of next line.\n\r";
+  u8 u8String2[] = "Here's a number: ";
+  u8 u8String3[] = " < The 'cursor' was here after the number.";
+  u32 u32Number = 1234567;
+
+  DebugPrintf(u8String);
+  DebugPrintf(u8String2);
+  DebugPrintNumber(u32Number);
+  DebugPrintf(u8String3);
+  DebugLineFeed();
+  DebugPrintf(u8String3);
+  DebugLineFeed();
  /* LedOn(BLUE);
   LedToggle(PURPLE);
   LedPWM(RED,Led_PWM10);
@@ -318,10 +339,340 @@ static u8 GetButtonValue(void)
   
   return u8Buttonword;
 }
+void Buzzled_song(void)
+{
+  static u8 u8_count_next =0;
+  static BOOL B_off_buzzel=FALSE;
+   u8 u8_songs[] =
+   	{1,1,1,1,2,2,2,2,3,3,3,3,1,1,1,1,
+   	 1,1,1,1,2,2,2,2,3,3,3,3,1,1,1,1,
+   	 3,3,3,3,4,4,4,4,5,5,5,5,5,5,5,5,
+   	 3,3,3,3,4,4,4,4,5,5,5,5,5,5,5,5,
+   	 5,5,6,5,5,4,3,3,3,3,1,1,1,1,
+   	 5,5,6,5,5,4,3,3,3,3,1,1,1,1,
+   	 1,1,1,1,1,5,5,5,5,1,1,1,1,1,1,1,
+   	 1,1,1,1,1,5,5,5,5,1,1,1,1,1,1,1,0
+   	};
+  // if(u8_songs[u8_count_next]!=0)
+   	
+   	  switch (u8_songs[u8_count_next])
+   	  	{
+   	  	  case 1:
+		  	PWMAudioSetFrequency(BUZZER1,131);
+				PWMAudioSetFrequency(BUZZER2,145);
+				PWMAudioSetFrequency(BUZZER2,131);
+				
+		  	break;
+		  case 2:
+		  	PWMAudioSetFrequency(BUZZER1,147);
+			PWMAudioSetFrequency(BUZZER2,160);
+			PWMAudioSetFrequency(BUZZER2,147);
+			
+		  	break;
+		  case 3:
+		  	PWMAudioSetFrequency(BUZZER1,165);
+			PWMAudioSetFrequency(BUZZER2,170);
+			PWMAudioSetFrequency(BUZZER2,165);;
+			
+		  	break;
+		  case 4:
+		  	PWMAudioSetFrequency(BUZZER1,175);
+			PWMAudioSetFrequency(BUZZER2,190);
+			PWMAudioSetFrequency(BUZZER2,175);
+			
+		  	break;
+          case 5:
+		  	PWMAudioSetFrequency(BUZZER1,196);
+			PWMAudioSetFrequency(BUZZER2,196);
+			
+			
+		  	break;
+		  case 0:
+		  	u8_count_next =0;
+		  	break;
+		  	
+		  }
+	  if(B_off_buzzel == TRUE)
+	  	{
+		  if(G_u32SystemTime1ms%100==0)
+		  	{
+		  	 u8_count_next++;
+			 LedToggle(LCD_GREEN);
+			 // LedToggle(LCD_RED);
+			   LedToggle(LCD_BLUE);
+			 for(u8 u8_temp_1=0;u8_temp_1<=7;u8_temp_1++)
+			 	{
+			 	LedOff(u8_temp_1);
+			 	}
+			 for(u8 u8_temp_2=0;u8_temp_2<=u8_songs[u8_count_next];u8_temp_2++)
+			 	
+			 	LedOn(u8_temp_2);
+			 DebugPrintf("your tone:\r\n");
+				DebugPrintNumber(u8_songs[u8_count_next]);
+				DebugPrintf("\r\n");
+		  	}
+	  }
+	  if(WasButtonPressed(BUTTON0))
+	  	{
+		  	ButtonAcknowledge(BUTTON0);
+			if(B_off_buzzel==FALSE)
+				{
+				u8_count_next=0;
+				PWMAudioOn(BUZZER1);
+				PWMAudioOn(BUZZER2);
+				B_off_buzzel = TRUE;
+				}
+			else
+				{B_off_buzzel =FALSE;
 
+				PWMAudioOff(BUZZER1);
+				PWMAudioOff(BUZZER2);
+			}
+	  	}
+	  
+}
+//
 
 static void UserApp1SM_Idle(void)
 {
+  static u8 au8RealName[3] = {'c','y','e'};
+  static u8 *u8p = au8RealName;
+  static u32 auInputData[100];
+  static u32 u32Number1 = 0;
+  static u32 u32Number2 = 0;
+  static u32 u32Number3 = 0;  
+   u8 au8OutputPattern[128];
+  static u8 u8i = 0;
+  static u8 u8CharCount;
+  u8 u8Count1 = 0;
+  u8 u8Count2 = 0;
+  u8 u8Index;
+  u8 u8Index1;
+  u8 temp;
+  static bool bswitch1 = FALSE;
+  static bool bswitch2 = FALSE;
+  static bool bswitch3 = FALSE;  
+  static bool bswitch = TRUE;
+
+  
+  if(bswitch)
+  {
+    if(G_u8DebugScanfCharCount == 1)
+    {
+      if(G_au8DebugScanfBuffer[0] == *u8p)
+      {
+        u8p++;
+        u8i++;
+        bswitch1 = TRUE;
+        DebugScanf(G_au8DebugScanfBuffer);
+        bswitch = FALSE;
+      }
+      else
+      {
+        u8p = au8RealName;
+        DebugScanf(G_au8DebugScanfBuffer);
+      }
+    }
+    
+  }
+
+  
+  if(bswitch1)
+  {
+    if(G_u8DebugScanfCharCount == 1)
+    {
+      if(G_au8DebugScanfBuffer[0] == *u8p)
+      {
+        u8p++;
+        u8i++;
+        bswitch2 = TRUE;
+        bswitch1 = FALSE;
+        DebugScanf(G_au8DebugScanfBuffer);
+      }
+/*      if((G_au8DebugScanfBuffer[0] != *u8p)&&(G_au8DebugScanfBuffer[0] == au8RealName[0]))
+      {
+        bswitch1 = TRUE;
+        DebugScanf(G_au8DebugScanfBuffer);
+      }
+      if((G_au8DebugScanfBuffer[0] != *u8p)&&(G_au8DebugScanfBuffer[0] != au8RealName[0]))
+      {
+        u8p = au8RealName;
+        u8i = 0;
+        DebugScanf(G_au8DebugScanfBuffer);
+        bswitch = TRUE;
+      } 
+*/
+      else
+      {
+        u8p = au8RealName;
+        u8i = 0;
+        DebugScanf(G_au8DebugScanfBuffer);
+        bswitch = TRUE;
+      }       
+    }
+  }
+  
+  
+  if(bswitch2)
+  {
+    if(G_u8DebugScanfCharCount == 1)
+    {
+      if(G_au8DebugScanfBuffer[0] == *u8p)
+      {
+        u8p = au8RealName;
+        u8i++;
+        bswitch2 = FALSE;
+        bswitch = TRUE;
+        DebugScanf(G_au8DebugScanfBuffer);
+      }
+      else
+      {
+        u8p = au8RealName;
+        u8i = 0;
+        DebugScanf(G_au8DebugScanfBuffer);
+        bswitch = TRUE;      
+      }
+      if(u8i == 3)
+      {
+        u8i = 0;
+        u32Number1++;
+        bswitch3 = TRUE;
+        
+      }
+    }
+  }
+  
+  
+  if(bswitch3)
+  {
+    u32Number2 = u32Number1;
+    u32Number3 = u32Number1;
+    while(u32Number2)
+    {
+      u32Number2 = u32Number2/10;
+      u8Count1++;
+    }
+    
+   
+    for(u8Index = 0;u8Index<(2+u8Count1);u8Index++)
+    {
+      au8OutputPattern[u8Index] = '*';  
+    }
+    au8OutputPattern[u8Index] = '\n';
+    u8Index++;
+    au8OutputPattern[u8Index] = '\r';
+    u8Index++;
+    au8OutputPattern[u8Index] = '*';
+    u8Index++;
+    
+    while(u32Number3)
+    {
+       au8OutputPattern[u8Index] = ((u32Number3%10)+0x30);
+       u32Number3 = u32Number3/10;
+       u8Index++;
+       u8Count2++;
+    }
+    
+    
+    
+    for(u8 i = 0;i<u8Count2/2;i++)
+    {
+        temp = au8OutputPattern[i+u8Index-u8Count2];
+        au8OutputPattern[i+u8Index-u8Count2] = au8OutputPattern[u8Index-i-1];
+        au8OutputPattern[u8Index-i-1] = temp;
+    }
+
+
+    au8OutputPattern[u8Index] = '*';
+    u8Index++;
+    au8OutputPattern[u8Index] = '\n';
+    u8Index++;
+    au8OutputPattern[u8Index] = '\r';
+    u8Index1 = u8Index+1;
+    for(u8Index = u8Index1;u8Index<(u8Index1+2+u8Count1);u8Index++)
+    {
+       au8OutputPattern[u8Index] = '*';  
+    }
+    au8OutputPattern[u8Index] = '\n';
+    u8Index++;
+    au8OutputPattern[u8Index] = '\r';
+    u8Index++;
+    au8OutputPattern[u8Index] = '\0';
+    
+    DebugLineFeed();
+    DebugPrintf(au8OutputPattern);
+    bswitch3 = FALSE;
+  }
+
+  /*static bool bCursorOn = FALSE;
+  
+  if(WasButtonPressed(BUTTON0))
+  {
+    ButtonAcknowledge(BUTTON0);
+    
+    if(bCursorOn)
+    {
+      
+      LCDCommand(LCD_DISPLAY_CMD | LCD_DISPLAY_ON);
+      bCursorOn = FALSE;
+    }
+    else
+    {
+     
+      LCDCommand(LCD_DISPLAY_CMD | LCD_DISPLAY_ON | LCD_DISPLAY_CURSOR | LCD_DISPLAY_BLINK);
+      bCursorOn = TRUE;
+   }
+  }
+  if(WasButtonPressed(BUTTON3))
+  {
+    ButtonAcknowledge(BUTTON3);
+    
+    /
+    if(UserApp_CursorPosition == LINE1_END_ADDR)
+    {
+      UserApp_CursorPosition = LINE2_START_ADDR;
+    }
+
+    else if (UserApp_CursorPosition == LINE2_END_ADDR)
+    {
+      UserApp_CursorPosition = LINE1_START_ADDR;
+    }
+    
+   
+    else
+    {
+      UserApp_CursorPosition++;
+    }
+    
+    
+    LCDCommand(LCD_ADDRESS_CMD | UserApp_CursorPosition);
+  } 
+  if(WasButtonPressed(BUTTON2))
+  {
+    ButtonAcknowledge(BUTTON2);
+    
+   
+    if(UserApp_CursorPosition == LINE1_END_ADDR)
+    {
+      UserApp_CursorPosition = LINE2_START_ADDR;
+    }
+
+    else if (UserApp_CursorPosition == LINE2_END_ADDR)
+    {
+      UserApp_CursorPosition = LINE1_START_ADDR;
+    }
+    
+  
+    else
+    {
+      UserApp_CursorPosition--;
+    }
+    
+   
+    LCDCommand(LCD_ADDRESS_CMD | UserApp_CursorPosition);
+  } /* end BUTTON2 */
+} /* end UserAppSM_Idle() */
+/*{
   static u8 u8RankNumber1 = 0;
   static u8 u8RankNumber2 = 0; 
   static u8 au8Password[10];

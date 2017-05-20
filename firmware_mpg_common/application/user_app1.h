@@ -50,6 +50,7 @@ void BCD_code_display(void);
 void button_pressed(void);
 void passord_button(void);
 static u8 GetButtonValue(void);
+void Buzzled_song(void);
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* Private functions                                                                                                  */
 /*--------------------------------------------------------------------------------------------------------------------*/
