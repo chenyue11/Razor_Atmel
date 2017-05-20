@@ -97,7 +97,7 @@ void UserApp1Initialize(void)
   LedOff(ORANGE);
   LedOff(CYAN);
   LedOff(GREEN);*/
-  LCDCommand(LCD_HOME_CMD); 
+  /*LCDCommand(LCD_HOME_CMD); 
   LCDMessage(LINE1_START_ADDR, UserApp_au8MyName);
   LCDMessage(LINE2_START_ADDR, "0");
   LCDMessage(LINE2_START_ADDR + 6, "1");
